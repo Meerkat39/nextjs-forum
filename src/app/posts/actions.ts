@@ -90,3 +90,58 @@ export async function addComment(
     return { message: "データベースエラーが発生しました。" };
   }
 }
+
+export type UpdateFormState = {
+  message: string;
+  errors?: {
+    title?: string;
+    content?: string;
+  };
+};
+
+export async function updatePost(
+  prevState: UpdateFormState,
+  formData: FormData
+): Promise<UpdateFormState> {
+  const postId = formData.get("postId") as string;
+  const title = formData.get("title") as string;
+  const content = formData.get("content") as string;
+
+  // バリデーション
+  const errors: UpdateFormState["errors"] = {};
+  if (!title || title.trim().length === 0) {
+    errors.title = "タイトルを入力してください。";
+  }
+  if (!content || content.trim().length === 0) {
+    errors.content = "本文を入力してください。";
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return {
+      message: "入力内容にエラーがあります。",
+      errors,
+    };
+  }
+
+  try {
+    // データベースを更新
+    await prisma.post.update({
+      where: { id: postId },
+      data: {
+        title,
+        content,
+      },
+    });
+  } catch (e) {
+    return {
+      message: "データベースの更新中にエラーが発生しました。",
+    };
+  }
+
+  // キャッシュを再検証
+  revalidatePath("/posts");
+  revalidatePath(`/posts/${postId}`);
+
+  // redirect() は try...catch の外で呼び出す
+  redirect(`/posts/${postId}`);
+}
