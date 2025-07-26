@@ -75,6 +75,7 @@
 *   \[x\] `app/posts/new/page.tsx` を作成し、投稿フォーム（タイトル・本文）を設置する。
 *   \[x\] フォームの `action` としてServer Actionを定義し、フォームデータをデータベースに保存する処理を実装する。
 *   \[x\] 投稿完了後、`revalidatePath` や `redirect` を使って投稿一覧ページを更新・遷移させる。
+*   \[x\] `useActionState` を導入し、フォームの送信状態と結果を管理する。
 
 ### 7. コメント機能の実装 (Server Actions)
 *   \[ \] 投稿詳細ページ (`/posts/[id]`) にコメント投稿フォームを設置する。
