@@ -2,33 +2,48 @@
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import z from "zod";
+
+const postSchema = z.object({
+  title: z
+    .string()
+    .min(1, { message: "タイトルは1文字以上で入力してください。" }),
+  content: z
+    .string()
+    .min(1, { message: "本文は1文字以上で入力してください。" }),
+});
+
+const commentSchema = z.object({
+  content: z
+    .string()
+    .min(1, { message: "コメントは1文字以上で入力してください。" }),
+});
 
 export type FormState = {
   message: string;
   errors?: {
-    title?: string;
-    content?: string;
+    title?: string[];
+    content?: string[];
   };
 };
 
-export async function createPost(prevState: FormState, formData: FormData) {
+export async function createPost(
+  prevState: FormState,
+  formData: FormData
+): Promise<FormState> {
   // フォームの情報を取得
-  const title = formData.get("title") as string;
-  const content = formData.get("content") as string;
+  const rawData = {
+    title: formData.get("title"),
+    content: formData.get("content"),
+  };
 
-  // バリデーション
-  const errors: FormState["errors"] = {};
-  if (!title || title.trim().length === 0) {
-    errors.title = "タイトルを入力してください。";
-  }
-  if (!content || content.trim().length === 0) {
-    errors.content = "本文を入力してください。";
-  }
+  // Zodスキーマでデータを検証
+  const validatedFields = postSchema.safeParse(rawData);
 
-  if (Object.keys(errors).length > 0) {
+  if (!validatedFields.success) {
     return {
       message: "入力内容にエラーがあります。",
-      errors,
+      errors: validatedFields.error.flatten().fieldErrors,
     };
   }
 
@@ -36,8 +51,8 @@ export async function createPost(prevState: FormState, formData: FormData) {
     // データベースに保存
     await prisma.post.create({
       data: {
-        title,
-        content,
+        title: validatedFields.data.title,
+        content: validatedFields.data.content,
       },
     });
   } catch (e) {
@@ -56,7 +71,7 @@ export async function createPost(prevState: FormState, formData: FormData) {
 export type CommentFormState = {
   message: string;
   errors?: {
-    content?: string;
+    content?: string[];
   };
 };
 
@@ -64,21 +79,22 @@ export async function addComment(
   precState: CommentFormState,
   formData: FormData
 ): Promise<CommentFormState> {
-  const content = formData.get("content") as string;
   const postId = formData.get("postId") as string;
+  const validatedFields = commentSchema.safeParse({
+    content: formData.get("content"),
+  });
 
-  // バリデーション
-  if (!content || content.trim().length === 0) {
+  if (!validatedFields.success) {
     return {
-      message: "コメント本文を入力してください。",
-      errors: { content: "コメント本文を入力してください" },
+      message: "入力内容にエラーがあります。",
+      errors: validatedFields.error.flatten().fieldErrors,
     };
   }
 
   try {
     await prisma.comment.create({
       data: {
-        content,
+        content: validatedFields.data.content,
         postId,
       },
     });
@@ -94,8 +110,8 @@ export async function addComment(
 export type UpdateFormState = {
   message: string;
   errors?: {
-    title?: string;
-    content?: string;
+    title?: string[];
+    content?: string[];
   };
 };
 
@@ -103,23 +119,20 @@ export async function updatePost(
   prevState: UpdateFormState,
   formData: FormData
 ): Promise<UpdateFormState> {
+  // フォームの情報を取得
   const postId = formData.get("postId") as string;
-  const title = formData.get("title") as string;
-  const content = formData.get("content") as string;
+  const rawData = {
+    title: formData.get("title"),
+    content: formData.get("content"),
+  };
 
-  // バリデーション
-  const errors: UpdateFormState["errors"] = {};
-  if (!title || title.trim().length === 0) {
-    errors.title = "タイトルを入力してください。";
-  }
-  if (!content || content.trim().length === 0) {
-    errors.content = "本文を入力してください。";
-  }
+  // Zodスキーマでデータを検証
+  const validatedFields = postSchema.safeParse(rawData);
 
-  if (Object.keys(errors).length > 0) {
+  if (!validatedFields.success) {
     return {
       message: "入力内容にエラーがあります。",
-      errors,
+      errors: validatedFields.error.flatten().fieldErrors,
     };
   }
 
@@ -128,8 +141,8 @@ export async function updatePost(
     await prisma.post.update({
       where: { id: postId },
       data: {
-        title,
-        content,
+        title: validatedFields.data.title,
+        content: validatedFields.data.content,
       },
     });
   } catch (e) {
