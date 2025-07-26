@@ -52,3 +52,41 @@ export async function createPost(prevState: FormState, formData: FormData) {
   // 投稿一覧ページにリダイレクト
   redirect("/posts");
 }
+
+export type CommentFormState = {
+  message: string;
+  errors?: {
+    content?: string;
+  };
+};
+
+export async function addComment(
+  precState: CommentFormState,
+  formData: FormData
+): Promise<CommentFormState> {
+  const content = formData.get("content") as string;
+  const postId = formData.get("postId") as string;
+
+  // バリデーション
+  if (!content || content.trim().length === 0) {
+    return {
+      message: "コメント本文を入力してください。",
+      errors: { content: "コメント本文を入力してください" },
+    };
+  }
+
+  try {
+    await prisma.comment.create({
+      data: {
+        content,
+        postId,
+      },
+    });
+
+    // 詳細ページのキャッシュを再検証
+    revalidatePath(`/posts/${postId}`);
+    return { message: "コメントを投稿しました。", errors: {} };
+  } catch (e) {
+    return { message: "データベースエラーが発生しました。" };
+  }
+}
