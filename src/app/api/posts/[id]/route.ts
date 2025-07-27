@@ -1,16 +1,12 @@
 import prisma from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
 
-interface RouteParams {
-  id: string;
-}
+type Props = {
+  params: Promise<{ id: string }>;
+};
 
-interface RouteContext {
-  params: RouteParams;
-}
-
-export async function DELETE(request: NextRequest, context: RouteContext) {
-  const id = context.params.id;
+export async function DELETE(request: NextRequest, { params }: Props) {
+  const { id } = await params;
 
   try {
     // 投稿に関連するすべてのコメントの削除
