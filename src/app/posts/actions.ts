@@ -56,6 +56,7 @@ export async function createPost(
       },
     });
   } catch (e) {
+    console.error(e);
     return {
       message: "データベースエラーが発生しました。",
     };
@@ -103,6 +104,7 @@ export async function addComment(
     revalidatePath(`/posts/${postId}`);
     return { message: "コメントを投稿しました。", errors: {} };
   } catch (e) {
+    console.error(e);
     return { message: "データベースエラーが発生しました。" };
   }
 }
@@ -146,6 +148,7 @@ export async function updatePost(
       },
     });
   } catch (e) {
+    console.error(e);
     return {
       message: "データベースの更新中にエラーが発生しました。",
     };

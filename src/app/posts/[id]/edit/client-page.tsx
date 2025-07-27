@@ -74,13 +74,15 @@ export default function EditPostClientPage({ post }: { post: Post }) {
         </div>
 
         <div className="flex items-center justify-end">
-          <button
-            type="submit"
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-          >
-            更新する
-          </button>
+          <SubmitButton />
         </div>
+
+        {state.message && state.errors && (
+           <p className="text-red-500 text-sm mt-4">{state.message}</p>
+        )}
+        {state.message && !state.errors && (
+           <p className="text-green-500 text-sm mt-4">{state.message}</p>
+        )}
       </form>
     </main>
   );
